@@ -1,0 +1,79 @@
+#!/usr/bin/python
+import sys
+import re
+from functionCalcul import *
+from solve import *
+from moreFunctions import *
+from initFunctions import *
+
+
+if (not len(sys.argv) == 2):
+	print "\033[31mProbleme d'argument\033[0m"
+	sys.exit(6)
+
+equ_init = sys.argv[1]
+equ_init = equ_init.replace(' ','')
+
+#separer de chque cote du egal en deux tableaux
+tab = equ_init_split(equ_init)
+
+#avoir un signe positif s'il n'y pas de signe (pour les deux cote)
+if len(tab[0]) == 0 or len(tab[1]) == 0:
+		print "\033[33mFormat invalide\033[0m"
+		sys.exit(5)
+
+add_sign(tab)
+
+# gestion d'erreur
+gestion_erreur(tab)
+
+#checker les puissances de A (le premier cote)
+A = []
+while re.search("(\-|\+)?([0-9]+\.[0-9]+|[0-9]+)(\*)?[xX]\^[0-9]+", tab[0]):
+	a = re.search("(\-|\+)?([0-9]+\.[0-9]+|[0-9]+)(\*)?[xX]\^[0-9]+", tab[0]).group(0)
+	A.append(a)
+	tab[0] = tab[0][len(a):]
+
+#checker les puissances de B (deuxieme cote)
+B = []
+while re.search("(\-|\+)?([0-9]+\.[0-9]+|[0-9]+)(\*)?[xX]\^[0-9]+", tab[1]):
+	b = re.search("(\-|\+)?([0-9]+\.[0-9]+|[0-9]+)(\*)?[xX]\^[0-9]+", tab[1]).group(0)
+	B.append(b)
+	tab[1] = tab[1][len(b):]
+
+A = change_signe_and_push(A, B)
+degre_max = check_degre_max(A)
+
+#supprimer un element quand il est additionner avec de la meme puissance
+prout = {}
+while len(A):
+	i = valeur = 0
+	tmp = int(re.search("[0-9]+$", A[0]).group(0))
+	while i < len(A):
+		if int(re.search("[0-9]+$", A[i]).group(0)) == tmp:
+			valeur += float(re.search("^(\-|\+)([0-9]+\.[0-9]+|[0-9]+)", A[i]).group(0))
+			A.pop(i)
+			i -= 1
+		i += 1
+	prout[tmp] = valeur
+
+#print forme reduite
+print "\033[4mForme reduite\033[0m :",
+tour = 0
+for key in prout:
+	dest = ""
+	if prout[key] >= 0 and tour > 0:
+		dest += "+"
+	if (key == 0):
+		dest += str(prout[key])
+	elif (key == 1):
+		dest += str(prout[key]) + "X"
+	else:
+		dest += str(prout[key]) + "X^" + str(key)
+	print dest,
+	tour += 1
+print "= 0"
+
+#print degre du polynome
+print "\033[4mDegre du polynome\033[0m :", degre_max
+solve(degre_max, prout)
